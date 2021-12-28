@@ -1,4 +1,5 @@
 # genny-alerts
-Wireless Generator Monitor
+The purpose of this project is to send email alerts when an emergency generator turns on or off.
 
-Intended for an Arduino Uno WiFi Rev2 board
+Intended Hardware: 
+ - Arduino Uno WiFi Rev2 board
