@@ -13,7 +13,7 @@ FunctionsFramework.cloud_event "send_alert" do |event|
 
   # setup email message
   from = Email.new(email: ENV['EMAIL_FROM'])
-  to = Email.new(email: ENV['EMAIL_FROM'])
+  to = Email.new(email: ENV['EMAIL_TO'])
   subject = 'Generator Alert!'
   content = Content.new(type: 'text/plain', value: message_data)
   mail = Mail.new(from, subject, to, content)
