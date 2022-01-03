@@ -30,6 +30,9 @@ const int analogPin = A0;
 WiFiSSLClient client;
 MqttClient    mqttClient(client);
 
+// analog input when generator is running
+const int analogOn = 99;
+
 // temp variables 
 int voltage = 0;
 bool isGenOn = false;
@@ -89,12 +92,12 @@ void loop() {
 
     // check for change in state
     // voltage detected and genarator was off
-    if (voltage > 1 && !isGenOn){
+    if (voltage > analogOn && !isGenOn){
       isGenOn = true;  
       publishEventMessage();
     } 
     // voltage not decteded and genarator was on
-    else if (voltage <= 1 && isGenOn){
+    else if (voltage <= analogOn && isGenOn){
       isGenOn = false;  
       publishEventMessage();
     }
@@ -184,6 +187,11 @@ void connectMQTT() {
   Serial.println(broker);
 
   while (!mqttClient.connected()) {
+    // ensure connected to WiFi
+    if (WiFi.status() != WL_CONNECTED) {
+      connectWiFi();
+    }
+    
     // Calculate the JWT and assign it as the password
     String jwt = calculateJWT();
 
@@ -263,21 +271,19 @@ bool getConfigValue(String configTxt, String parameter, String defaultValue = "f
   }
 }
  
-void publishEventMessage() {
-  float v = (float)voltage / (float)250;
-  
+void publishEventMessage() { 
   Serial.println("Publishing device event message");
   
   // send message, the Print interface can be used to set the message contents
   mqttClient.beginMessage("/devices/" + deviceId + "/events");
-  mqttClient.print("Generator status:");
+  mqttClient.print("Generator status: ");
   if (isGenOn) {
     mqttClient.println("ON");
   } else {
     mqttClient.println("OFF");
   }
-  mqttClient.print("Device voltage:");
-  mqttClient.println(v, 2);
+  mqttClient.print("Device voltage: ");
+  mqttClient.println(getVolts(voltage), 2);
   mqttClient.endMessage();
 
   // reset to default
@@ -296,7 +302,7 @@ void publishDeviceMessage() {
   mqttClient.print("IP:");
   mqttClient.println(WiFi.localIP());
   mqttClient.print("Voltage:");
-  mqttClient.println(voltage);
+  mqttClient.println(getVolts(voltage), 2);
   mqttClient.endMessage();
 }
 
@@ -333,6 +339,12 @@ void onMessageReceived(int messageSize) {
 unsigned long getTime() {
   // get the current time from the WiFi module
   return WiFi.getTime();
+}
+
+float getVolts(int analogInput){
+  const float conversion = (5. / 1023.);
+  // convert analog input into voltage
+  return (float)analogInput * conversion;
 }
 
 void blink() {
